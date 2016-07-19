@@ -36,10 +36,14 @@ try:
    output_dir = sys.argv[4]
 except:
    print('run in shell mode')
-   dbhost = 'mongodb://localhost:27017/'
+   dbhost = 'mongodb://hs133:27017/'
    dbname = 'analysis'
-   format_dir = '/home/peeratham/tpeera4/spark/examples/src/main/resources/'
-   output_dir = '/home/peeratham/tpeera4/smell-analysis/analysis_output/'
+   #local
+   # format_dir = '/home/peeratham/tpeera4/spark/examples/src/main/resources/'
+   # output_dir = '/home/peeratham/tpeera4/smell-analysis/analysis_output/'
+   #server
+   format_dir = 'file:///home/tpeera4/projects/spark-smell-aggregate/'
+   output_dir = 'file:///home/tpeera4/analysis_output/'
 
 sqlContext = SQLContext(sc)
 
