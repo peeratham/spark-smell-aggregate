@@ -6,6 +6,7 @@ import sys
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SQLContext
 import pandas as pd
+import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -27,6 +28,8 @@ APP_NAME = "Large-Scale Block Smell Analysis"
 pymongo_spark.activate()
 # Configure Spark
 conf = SparkConf().setAppName(APP_NAME)
+
+matplotlib.use('Agg')
 # Configure SQLContext
 try:
    sc = SparkContext(conf=conf)
