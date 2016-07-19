@@ -35,7 +35,7 @@ conf = SparkConf().setAppName(APP_NAME)
 # Configure SQLContext
 try:
    sc = SparkContext(conf=conf)
-   dbhost = sys.argv[1]
+   dbhost = 'mongodb://'+sys.argv[1]+':27017/'
    dbname = sys.argv[2]
    format_dir = sys.argv[3]
    output_dir = sys.argv[4]
