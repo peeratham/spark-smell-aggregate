@@ -18,7 +18,6 @@ from pyspark.sql.types import *
 ## Constants
 APP_NAME = "Large-Scale Block Smell Analysis"
 
-# 'mongodb://hslogin1:27017'
 ##OTHER FUNCTIONS/CLASSES
 
 
@@ -28,13 +27,21 @@ APP_NAME = "Large-Scale Block Smell Analysis"
 pymongo_spark.activate()
 # Configure Spark
 conf = SparkConf().setAppName(APP_NAME)
-sc   = SparkContext(conf=conf)
 # Configure SQLContext
+try:
+   sc = SparkContext(conf=conf)
+   dbhost = sys.argv[1]
+   dbname = sys.argv[2]
+   format_dir = sys.argv[3]
+   output_dir = sys.argv[4]
+except:
+   print('run in shell mode')
+   dbhost = 'mongodb://localhost:27017/'
+   dbname = 'analysis'
+   format_dir = '/home/peeratham/tpeera4/spark/examples/src/main/resources/'
+   output_dir = '/home/peeratham/tpeera4/smell-analysis/analysis_output/'
+
 sqlContext = SQLContext(sc)
-dbhost = sys.argv[1]
-dbname = sys.argv[2]
-format_dir = sys.argv[3]
-output_dir = sys.argv[4]
 
 def write_latex(pdf, filename):
     with open(filename, 'w') as f:
@@ -156,4 +163,5 @@ plt.savefig(output_dir+'mastery-distribution')
 #Basic Stats
 # distinct_creators = analysis_df.select('creator').distinct().count()
 # analysis_population = smell_stats_pdf[0][1]
+
 
