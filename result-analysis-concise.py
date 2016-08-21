@@ -18,6 +18,7 @@ import pymongo_spark
 from pyspark.sql.functions import udf
 from pyspark.sql.types import *
 from pyspark.sql.functions import mean, min, max
+from pyspark.sql.functions import explode
 
 import numpy as np
 import math
@@ -46,7 +47,7 @@ except:
       format_dir = '/home/peeratham/tpeera4/smell-analysis/format/'
       output_dir = '/home/peeratham/tpeera4/smell-analysis/analysis_output/'
    else:
-      dbhost = 'mongodb://hs094:27017/'
+      dbhost = 'mongodb://hs095:27017/'
       format_dir = 'file:///home/tpeera4/projects/spark-smell-aggregate/format/'
       output_dir = '/home/tpeera4/analysis_output/'
       #output_dir = '/home/tpeera4/analysis_output/tex/'
@@ -163,7 +164,7 @@ norm_analysis_df = analysis_df.select(*[udf_normalize(column+'.count', analysis_
 # norm_analysis_df = norm_analysis_df.select(*[udf_normalize(column, norm_analysis_df['PS.bloc']).alias(column) if column in expandedSmells else column for column in norm_analysis_df.columns])
 norm_analysis_df = norm_analysis_df.withColumn('DC_inter', udf_normalize(norm_analysis_df['DC_inter'], norm_analysis_df['PS.bloc']))
 norm_analysis_df = norm_analysis_df.select(*[udf_get_count(column+'.count').alias(column) if column in absoluteSmells else column for column in norm_analysis_df.columns])
-
+proficient_df = norm_analysis_df.filter(norm_analysis_df['masteryLevel']==3) 
 
 ###################################################################
 ###################---Basic Stats---###############################
@@ -214,7 +215,7 @@ def weight_pdf_to_vals(val_weight_pdf, val_colname, weight_colname):
       weighted.append(row[val_colname])
   return weighted
 
-proficient_df = norm_analysis_df.filter(norm_analysis_df['masteryLevel']==3) 
+
 num_proficient_level = proficient_df.count() # 232426 out of 880809
 
 total_bloc = proficient_df.select('PS.bloc').groupBy().sum().toDF('sum').take(1)[0].sum
@@ -360,13 +361,9 @@ plt.savefig(output_dir+'Readability-size-mastery-comparison')
 # BCW, UB, BVS
 complexity_smells = ['BCW', 'UBC', 'BVS']
 complexity_smells_dict = {'BCW':'Broadcast Workaround', 'UBC':'Unnecessary Broadcast', 'BVS': 'Broad Variable Scope'}
-complexity_smells_ylabels = {'BCW':'smells / bloc', 'UBC':'smells / bloc', 'BVS':'smells / total variables'}
+complexity_smells_ylabels = {'BCW':'smell', 'UBC':'smell', 'BVS':'smell'}
 # column reduction
-complexity_analysis_df = analysis_df.select([col for col in analysis_df.columns if col not in diff(smells,complexity_smells)])
-#normalize complexity code smells
-complexity_analysis_df = complexity_analysis_df.withColumn('BCW',udf_normalize(complexity_analysis_df['BCW.count'], complexity_analysis_df['PS.bloc']))
-complexity_analysis_df = complexity_analysis_df.withColumn('UBC',udf_normalize(complexity_analysis_df['UBC.count'], complexity_analysis_df['PS.bloc']))
-complexity_analysis_df = complexity_analysis_df.withColumn('BVS',udf_normalize(complexity_analysis_df['BVS.count'], complexity_analysis_df['PE.varCount']))
+complexity_analysis_df = norm_analysis_df.select([col for col in norm_analysis_df.columns if col not in diff(smells,complexity_smells)])
 ##aggregation
 complexity_analysis_pdf = complexity_analysis_df.select(complexity_smells+['masteryLevel','bloc level']).groupBy('bloc level','masteryLevel').avg(*complexity_smells).toDF('Project Size', 'Mastery level', *complexity_smells).toPandas()
 ##plot
@@ -383,37 +380,19 @@ for smell in complexity_smells:
 plt.tight_layout(pad=2, w_pad=2.5, h_pad=2.0)
 plt.savefig(output_dir+'Complexity-size-mastery-comparison')
 
-
-##################Effects of Code Smells##############
-# smell_density_pdf = norm_analysis_df.select(['total smell','level','bloc level']).groupBy('bloc level', 'level').avg('total smell').toDF('bloc level', 'level', 'total smell').toPandas()
-# Relationship between smell density v.s. project size and programmer's mastery level
-smell_density_pdf = norm_analysis_df.select(['total smell','masteryLevel','bloc level']).groupBy('bloc level','masteryLevel').avg('total smell').toDF('Project Size', 'Mastery level', 'Avg. Smells').toPandas()
-plt.gcf().clear()
-sns.barplot(x="Project Size", y="Avg. Smells", hue="Mastery level", data=smell_density_pdf, palette="Greens")
-plt.xlabel('Project Size')
-plt.ylabel('Average Smell Density')
-plt.savefig(output_dir+'Overall-Smell-Mastery-Size')
-##############Smell vs Project Size vs Mastery Level#####################
-each_smell_density_pdf = norm_analysis_df.select(smells+['masteryLevel','bloc level']).groupBy('bloc level','masteryLevel').avg(*smells).toDF('Project Size', 'Mastery level', *smells).toPandas()
-plt.gcf().clear()
-colNum = 3; rowNum = 4
-
-fig, axes = plt.subplots(nrows=rowNum, ncols=colNum, figsize=(12, 18))
-i = 0; j = 0
-for smell in smells:
-   if j!=0 and j%(colNum)==0:
-      i=i+1
-   ax = sns.barplot(x="Project Size", y=smell, hue="Mastery level", data=each_smell_density_pdf, palette="Greens", ax=axes[i%(rowNum),j%(colNum)])
-   ax.set_title(smell)
-   j=j+1
-
-plt.tight_layout(pad=2, w_pad=2.5, h_pad=2.0)
-plt.savefig(output_dir+'each-smell-size-mastery-comparison')
-
-
 ############### Threshold for TLS ############
-from pyspark.sql.functions import explode
+
 bloc_df = proficient_df.select(explode(proficient_df['PS.blocPerScript']))
 bloc_rdd = bloc_df.rdd.map(lambda row: row.col)
 bloc_array = bloc_rdd.collect()
 np.percentile(bloc_array,[70,80,90]) # 5,7,11
+
+############### Threshold for Purity #############
+purity_df = proficient_df.select(explode(proficient_df['SO.purity_vals']))
+purity_rdd = purity_df.rdd.map(lambda row: row.col)
+purity_array = purity_rdd.collect()
+np.percentile(purity_array,[10,20,30])  #0.5 ~ 1/3 (20th percentile) at least 80% of the values has higher purity value than 1/3
+
+percent = (norm_analysis_df.filter(norm_analysis_df['SO.avg']< 0.5).count()/total_projects)*100 #38.97% of projects have lower purity value than 1/3
+script_organization_pdf = norm_analysis_df.select(['SO','masteryLevel','bloc level']).groupBy('bloc level','masteryLevel').avg('SO.avg').toDF('Project Size', 'Mastery level', "Purity").toPandas()
+sns.barplot(x="Project Size", y=smell, hue="Mastery level", data=script_organization_pdf, palette="Blues", ax=axes[col])

@@ -1,1 +1,1 @@
-{"PS":{"bloc":19.0,"script_length":4.75,"sprite":3,"blocPerSprite":[9,10,0],"script":1,"blocPerScript":[5,4,5,5]},"PE":{"customBlockCount":20,"varCount":55},"MS":{"total":15},"SO":{"purity_vals":[0.925],"avg":0.925},"_id":113691249}
+{"PS":{"bloc":19.0,"script_length":4.75,"sprite":3,"blocPerSprite":[9,10,0],"script":1,"blocPerScript":[5,4,5,5]},"PE":{"customBlockCount":20,"varCount":55},"MS":{"total":15},"SO":{"purity_vals":[0.925],"avg":0.925},"SCI":{"impurity_vals":[0.5]},"_id":113691249}
