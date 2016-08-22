@@ -47,7 +47,7 @@ except:
       format_dir = '/home/peeratham/tpeera4/smell-analysis/format/'
       output_dir = '/home/peeratham/tpeera4/smell-analysis/analysis_output/'
    else:
-      dbhost = 'mongodb://hs095:27017/'
+      dbhost = 'mongodb://hs008:27017/'
       format_dir = 'file:///home/tpeera4/projects/spark-smell-aggregate/format/'
       output_dir = '/home/tpeera4/analysis_output/'
       #output_dir = '/home/tpeera4/analysis_output/tex/'
